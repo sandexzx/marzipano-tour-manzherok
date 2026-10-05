@@ -9,25 +9,45 @@
 </head>
 <body>
   <main id="pano" aria-label="Панорама 360 градусов"></main>
-  <header>
-    <h1>Манжерок <span>Виртуальный тур</span></h1>
-    <div class="selectors">
-      <label>Этаж<select id="floor"></select></label>
-      <label class="scene-label">Точка обзора<select id="scene"></select></label>
+  <header aria-label="Управление туром">
+    <div class="brand">
+      <svg viewBox="0 0 36 36" aria-hidden="true"><path d="m3 27 10-17 7 12 5-8 8 13M10 27h16"/></svg>
+      <div><span class="brand-kicker">ВИРТУАЛЬНЫЙ ТУР</span><h1>Манжерок</h1><span class="brand-caption">Архитектура в деталях</span></div>
     </div>
-    <button id="show-plan" type="button">План этажей</button>
+    <div class="selectors">
+      <div class="floor-control">
+        <span class="field-label" id="floor-label">Этаж</span>
+        <select id="floor" aria-label="Выбор этажа" hidden></select>
+        <div class="floor-tabs" role="group" aria-labelledby="floor-label">
+          <button type="button" data-floor="1" aria-pressed="true">1 этаж</button>
+          <button type="button" data-floor="2" aria-pressed="false">2 этаж</button>
+        </div>
+      </div>
+      <div class="scene-control">
+        <span class="field-label" id="scene-label">Помещение</span>
+        <select id="scene" aria-label="Выбор панорамы" hidden></select>
+        <button id="scene-picker" type="button" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-controls="scene-menu" aria-labelledby="scene-label scene-value">
+          <span id="scene-value">Выберите помещение</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>
+        </button>
+        <div id="scene-menu" role="listbox" aria-labelledby="scene-label" hidden></div>
+      </div>
+    </div>
+    <button id="show-plan" type="button" aria-label="Открыть план этажей"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2V5Zm6-2v16m6-14v16"/></svg><span>План этажей</span></button>
+    <div class="panel-caption"><span class="live-dot"></span>360° · Исследуйте пространство</div>
   </header>
   <p id="status" role="status">Загрузка панорамы…</p>
-  <footer><strong id="location"></strong><span>Стрелки — переход · Перетаскивание — осмотр · Колёсико — масштаб</span></footer>
+  <footer><strong id="location"></strong><span>Перетаскивайте для осмотра · Стрелки для перехода</span></footer>
   <dialog id="plan" aria-labelledby="plan-title">
     <div class="plan-toolbar">
-      <h2 id="plan-title">План этажей</h2>
-      <div id="plan-floors" aria-label="Этаж плана"></div>
+      <div class="plan-heading"><span class="brand-kicker">НАВИГАЦИЯ ПО ОБЪЕКТУ</span><h2 id="plan-title">План этажей</h2></div>
+      <div id="plan-floors" class="floor-tabs" role="group" aria-label="Этаж плана"></div>
       <button id="plan-scale" type="button" aria-pressed="false">Весь план</button>
-      <button id="close-plan" type="button" autofocus>Закрыть</button>
+      <button id="close-plan" type="button" aria-label="Закрыть план" autofocus><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
     </div>
-    <p class="plan-hint">Нажмите на номер для перехода. Синяя точка — текущее положение. Ангар (16) — в режиме «Весь план».</p>
+    <p class="plan-hint">Нажмите на номер для перехода. Выделенная точка — ваше положение. Ангар (16) — в режиме «Весь план».</p>
     <div id="plan-scroll"><div id="plan-image"><img id="plan-picture" alt=""><div id="markers"></div></div></div>
+    <div class="plan-legend"><span class="legend-point"></span>Точка обзора <span class="legend-point current"></span>Вы здесь</div>
   </dialog>
   <script src="vendor/marzipano.js"></script>
   <script src="tour.js"></script>

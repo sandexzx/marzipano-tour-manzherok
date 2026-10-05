@@ -6,6 +6,11 @@
   var floorSelect = document.getElementById('floor');
   var sceneSelect = document.getElementById('scene');
   var plan = document.getElementById('plan');
+  var scenePicker = document.getElementById('scene-picker');
+  var sceneMenu = document.getElementById('scene-menu');
+  var activeOption = 0;
+  var searchText = '';
+  var searchTimer;
   var entries = {};
   var current = null;
   var planFloor = 1;
@@ -60,6 +65,119 @@
     });
   }
 
+  function syncControls() {
+    document.querySelectorAll('header .floor-tabs button').forEach(function(button) {
+      button.setAttribute('aria-pressed', String(button.dataset.floor === floorSelect.value));
+    });
+    if (!scenePicker) { return; }
+    var selected = sceneSelect.options[sceneSelect.selectedIndex];
+    document.getElementById('scene-value').textContent = selected ? selected.textContent : 'Выберите помещение';
+    sceneMenu.replaceChildren();
+    Array.prototype.forEach.call(sceneSelect.options, function(option, index) {
+      var item = document.createElement('div');
+      item.id = 'scene-option-' + option.value;
+      item.className = 'scene-option';
+      item.setAttribute('role', 'option');
+      item.setAttribute('aria-selected', String(option.selected));
+      item.dataset.index = index;
+      item.textContent = option.textContent;
+      sceneMenu.appendChild(item);
+    });
+    activeOption = Math.max(0, sceneSelect.selectedIndex);
+    if (!sceneMenu.hidden) { highlightOption(); }
+  }
+
+  function highlightOption() {
+    var items = sceneMenu.children;
+    Array.prototype.forEach.call(items, function(item, index) {
+      item.classList.toggle('is-active', index === activeOption);
+    });
+    if (items[activeOption]) {
+      scenePicker.setAttribute('aria-activedescendant', items[activeOption].id);
+      items[activeOption].scrollIntoView({ block: 'nearest' });
+    }
+  }
+
+  function closeSceneMenu() {
+    if (!scenePicker) { return; }
+    sceneMenu.hidden = true;
+    scenePicker.setAttribute('aria-expanded', 'false');
+    scenePicker.removeAttribute('aria-activedescendant');
+    searchText = '';
+    window.clearTimeout(searchTimer);
+  }
+
+  function openSceneMenu() {
+    sceneMenu.hidden = false;
+    scenePicker.setAttribute('aria-expanded', 'true');
+    activeOption = Math.max(0, sceneSelect.selectedIndex);
+    highlightOption();
+  }
+
+  function chooseOption(index) {
+    if (!sceneSelect.options[index]) { return; }
+    sceneSelect.selectedIndex = index;
+    closeSceneMenu();
+    sceneSelect.dispatchEvent(new Event('change'));
+    scenePicker.focus({ preventScroll: true });
+  }
+
+  if (scenePicker) {
+    scenePicker.addEventListener('click', function() {
+      if (sceneMenu.hidden) { openSceneMenu(); } else { closeSceneMenu(); }
+    });
+    sceneMenu.addEventListener('click', function(event) {
+      var option = event.target.closest('[role="option"]');
+      if (option) { chooseOption(Number(option.dataset.index)); }
+    });
+    scenePicker.addEventListener('keydown', function(event) {
+      var key = event.key;
+      if (key === 'Escape') { closeSceneMenu(); event.preventDefault(); return; }
+      if (key === 'Tab') { closeSceneMenu(); return; }
+      if (['ArrowDown', 'ArrowUp', 'Home', 'End'].indexOf(key) !== -1) {
+        event.preventDefault();
+        var wasClosed = sceneMenu.hidden;
+        if (wasClosed) { openSceneMenu(); }
+        if (key === 'Home') { activeOption = 0; }
+        else if (key === 'End') { activeOption = sceneSelect.options.length - 1; }
+        else if (!wasClosed) { activeOption += key === 'ArrowDown' ? 1 : -1; }
+        activeOption = Math.max(0, Math.min(sceneSelect.options.length - 1, activeOption));
+        highlightOption();
+      } else if (key === 'Enter' || key === ' ') {
+        event.preventDefault();
+        if (sceneMenu.hidden) { openSceneMenu(); } else { chooseOption(activeOption); }
+      } else if (key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
+        event.preventDefault();
+        if (sceneMenu.hidden) { openSceneMenu(); }
+        searchText += key.toLocaleLowerCase('ru');
+        window.clearTimeout(searchTimer);
+        searchTimer = window.setTimeout(function() { searchText = ''; }, 700);
+        var options = Array.prototype.slice.call(sceneSelect.options);
+        var found = options.findIndex(function(option) {
+          return option.textContent.toLocaleLowerCase('ru').indexOf(searchText) === 0 ||
+            option.textContent.replace(/^\d+ · /, '').toLocaleLowerCase('ru').indexOf(searchText) === 0;
+        });
+        if (found !== -1) { activeOption = found; highlightOption(); }
+      }
+    });
+    document.addEventListener('pointerdown', function(event) {
+      if (!event.target.closest('.scene-control')) { closeSceneMenu(); }
+    });
+    document.addEventListener('focusin', function(event) {
+      if (!event.target.closest('.scene-control')) { closeSceneMenu(); }
+    });
+  }
+
+  document.querySelectorAll('header .floor-tabs button').forEach(function(button) {
+    button.addEventListener('click', function() {
+      closeSceneMenu();
+      if (floorSelect.value !== button.dataset.floor) {
+        floorSelect.value = button.dataset.floor;
+        floorSelect.dispatchEvent(new Event('change'));
+      }
+    });
+  });
+
   function select(id, preserveHeading) {
     var next = entries[id];
     if (!next) { return; }
@@ -79,6 +197,7 @@
     floorSelect.value = next.config.floor;
     populateScenes(next.config.floor);
     sceneSelect.value = id;
+    syncControls();
     document.getElementById('location').textContent = next.config.floor + ' этаж · ' + id + ' · ' + next.config.name;
     status.textContent = next.loaded ? '' : 'Загрузка панорамы ' + id + '…';
     // Marzipano releases inactive textures after the fade; never clear pinned transition layers.
@@ -140,7 +259,8 @@
       button.setAttribute('aria-pressed', String(Number(button.dataset.floor) === planFloor));
     });
     var scale = document.getElementById('plan-scale');
-    scale.textContent = fullPlan ? 'Крупно: помещения' : 'Весь план';
+    scale.textContent = fullPlan ? 'Помещения' : 'Весь план';
+    scale.setAttribute('aria-label', fullPlan ? 'Показать помещения крупно' : 'Показать весь план');
     scale.setAttribute('aria-pressed', String(fullPlan));
   }
 
@@ -150,6 +270,7 @@
   });
   sceneSelect.addEventListener('change', function() { select(Number(sceneSelect.value), false); });
   document.getElementById('show-plan').addEventListener('click', function() {
+    closeSceneMenu();
     planFloor = current ? current.config.floor : 1;
     renderPlan();
     plan.showModal();
