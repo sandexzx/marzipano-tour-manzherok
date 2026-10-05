@@ -1,0 +1,11 @@
+# Publish only the static tour and its documentation.
+/*
+!/.gitignore
+!/.nojekyll
+!/README.md
+!/index.html
+!/index.js
+!/style.css
+!/tour.js
+!/assets/
+!/vendor/

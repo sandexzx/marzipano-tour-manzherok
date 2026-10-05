@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Манжерок — виртуальный тур</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main id="pano" aria-label="Панорама 360 градусов"></main>
+  <header>
+    <h1>Манжерок <span>Виртуальный тур</span></h1>
+    <div class="selectors">
+      <label>Этаж<select id="floor"></select></label>
+      <label class="scene-label">Точка обзора<select id="scene"></select></label>
+    </div>
+    <button id="show-plan" type="button">План этажей</button>
+  </header>
+  <p id="status" role="status">Загрузка панорамы…</p>
+  <footer><strong id="location"></strong><span>Стрелки — переход · Перетаскивание — осмотр · Колёсико — масштаб</span></footer>
+  <dialog id="plan" aria-labelledby="plan-title">
+    <div class="plan-toolbar">
+      <h2 id="plan-title">План этажей</h2>
+      <div id="plan-floors" aria-label="Этаж плана"></div>
+      <button id="plan-scale" type="button" aria-pressed="false">Весь план</button>
+      <button id="close-plan" type="button" autofocus>Закрыть</button>
+    </div>
+    <p class="plan-hint">Нажмите на номер для перехода. Синяя точка — текущее положение. Ангар (16) — в режиме «Весь план».</p>
+    <div id="plan-scroll"><div id="plan-image"><img id="plan-picture" alt=""><div id="markers"></div></div></div>
+  </dialog>
+  <script src="vendor/marzipano.js"></script>
+  <script src="tour.js"></script>
+  <script src="index.js"></script>
+</body>
+</html>

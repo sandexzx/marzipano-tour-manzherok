@@ -1,0 +1,55 @@
+* { box-sizing: border-box; }
+:root { color-scheme: dark; font-family: system-ui, sans-serif; color: #f4f6fa; background: #161b22; }
+html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; }
+#pano { position: absolute; inset: 0; }
+header { position: absolute; top: 16px; left: 16px; right: 16px; display: flex; align-items: center; gap: 24px; padding: 12px 16px; border: 1px solid #ffffff16; border-radius: 12px; background: #0f172ae0; }
+h1 { margin: 0; font-size: 20px; white-space: nowrap; }
+h1 span { display: block; margin-top: 3px; font-size: 12px; font-weight: 400; color: #b7c3d6; }
+.selectors { display: flex; gap: 12px; flex: 1; min-width: 0; }
+label { display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: #b7c3d6; }
+.scene-label { flex: 1; max-width: 420px; min-width: 0; }
+button, select { border: 1px solid #758196; border-radius: 7px; padding: 9px 12px; color: #fff; background: #293448; font: inherit; font-size: 14px; cursor: pointer; min-height: 40px; }
+select { width: 100%; }
+button:hover { background: #40516d; }
+button[aria-pressed="true"] { background: #2267b9; border-color: #8ac2ff; }
+button:focus-visible, select:focus-visible { outline: 3px solid #8ac2ff; outline-offset: 3px; }
+#show-plan { margin-left: auto; white-space: nowrap; }
+#status { position: absolute; top: 110px; left: 16px; right: 16px; width: fit-content; padding: 10px 16px; background: #0f172ae0; border-radius: 8px; }
+#status:empty { display: none; }
+footer { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); width: max-content; max-width: 95%; padding: 8px 12px; border-radius: 8px; background: #0f172ac9; font-size: 12px; text-align: center; pointer-events: none; }
+footer strong, footer span { display: block; }
+footer strong { margin-bottom: 4px; font-size: 14px; }
+dialog { width: min(1200px, 96vw); max-height: 94vh; padding: 16px; border: 1px solid #758196; border-radius: 12px; background: #161b22; color: #fff; }
+dialog::backdrop { background: #000b; }
+.plan-toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+h2 { margin: 0 auto 0 0; font-size: 18px; }
+#plan-floors { display: flex; gap: 6px; }
+.plan-hint { color: #b7c3d6; font-size: 13px; margin: 12px 0; }
+#plan-scroll { max-height: 72vh; overflow: auto; background: #fff; border-radius: 4px; }
+#plan-image { position: relative; width: min(100%, calc(70vh * var(--plan-ratio))); margin: 0 auto; }
+#plan-picture { display: block; width: 100%; height: auto; }
+.plan-marker { position: absolute; transform: translate(-50%, -50%); border-radius: 6px; width: 32px; height: 28px; min-height: 28px; padding: 0; font-size: 13px; font-weight: 700; background: #b52121; border: 2px solid white; box-shadow: 0 2px 5px #0006; }
+.plan-marker[aria-pressed="true"] { background: #2267b9; outline: 3px solid #8ac2ff; z-index: 1; }
+.travel-arrow { position: relative; width: 120px; height: 120px; border: 0; padding: 0; background: transparent; border-radius: 50%; backface-visibility: hidden; }
+.travel-arrow:hover { background: transparent; }
+.travel-arrow svg { display: block; width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 5px 3px #0008); }
+.travel-arrow circle { fill: #152a40bb; stroke: #fff; stroke-width: 4; }
+.travel-arrow path { fill: none; stroke: #fff; stroke-width: 12; stroke-linecap: round; stroke-linejoin: round; }
+.travel-arrow span { position: absolute; left: 0; right: 0; top: 78px; font-size: 18px; font-weight: 700; text-shadow: 0 1px 3px #000; }
+.stairs-arrow circle { fill: #825523dd; }
+.travel-arrow:hover circle, .travel-arrow:focus-visible circle { fill: #2267b9; }
+@media (max-width: 700px) {
+  header { gap: 10px; flex-wrap: wrap; top: 8px; left: 8px; right: 8px; padding: 10px; }
+  h1 { font-size: 17px; }
+  h1 span { display: none; }
+  .selectors { flex-basis: 100%; order: 1; }
+  .scene-label { max-width: none; }
+  #status { top: 150px; }
+  footer span { font-size: 11px; }
+  dialog { padding: 10px; }
+  .plan-toolbar { gap: 6px; }
+  h2 { width: 100%; }
+  .plan-toolbar button { padding: 6px 8px; font-size: 12px; }
+  .plan-marker { width: 25px; height: 24px; min-height: 24px; font-size: 11px; }
+  #plan-image { min-width: 340px; }
+}
