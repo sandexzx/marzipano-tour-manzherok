@@ -102,7 +102,7 @@ try {
     console.log(`Loaded panorama ${id}`);
   }
   // Click actual hotspot DOM buttons, including both staircases.
-  for (const [from, to] of [[1, 2], [5, 7], [7, 9], [9, 10], [10, 9], [29, 30], [30, 31], [31, 30], [12, 19], [19, 12], [13, 22], [22, 13], [17, 18], [18, 17]]) {
+  for (const [from, to] of [[1, 2], [5, 7], [7, 9], [9, 10], [10, 9], [29, 30], [30, 31], [31, 30], [12, 9], [12, 19], [19, 12], [13, 22], [22, 13], [17, 18], [18, 17]]) {
     await choose(from);
     await evaluate(`(() => {
       const arrows = [...document.querySelectorAll('.travel-arrow[data-to="${to}"]')];
@@ -163,7 +163,7 @@ try {
   assert.equal(await evaluate(`document.querySelector('.plan-marker[aria-pressed="true"]').textContent`), '33');
   await screenshot('smoke-plan.png');
   await evaluate(`document.getElementById('plan-scale').click()`);
-  await waitFor(`document.getElementById('plan-picture').complete && document.getElementById('plan-picture').naturalWidth === 3410`);
+  await waitFor(`document.getElementById('plan-picture').complete && document.getElementById('plan-picture').naturalWidth === window.TOUR_DATA.floors.find(f => f.id === 2).width`);
   await evaluate(`[...document.querySelectorAll('.plan-marker')].find(b => b.textContent === '35').click()`);
   await waitFor(`!document.getElementById('plan').open && document.getElementById('scene').value === '35' && document.getElementById('status').textContent === ''`);
   await command('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
@@ -184,8 +184,13 @@ try {
   await waitFor(`document.getElementById('plan-picture').complete && document.getElementById('plan-picture').naturalWidth > 0`);
   assert.equal(await evaluate(`document.querySelectorAll('.plan-marker').length`), 18);
   await evaluate(`document.getElementById('plan-scale').click()`);
-  await waitFor(`document.getElementById('plan-picture').complete && document.getElementById('plan-picture').naturalWidth === 750`);
-  assert.equal(await evaluate(`document.querySelectorAll('.plan-marker').length`), 16);
+  await waitFor(`document.getElementById('plan-picture').complete && document.getElementById('plan-picture').naturalWidth === window.TOUR_DATA.planCrop[2] - window.TOUR_DATA.planCrop[0]`);
+  assert.equal(await evaluate(`document.querySelectorAll('.plan-marker').length`), 18);
+  assert.ok(await evaluate(`(() => {
+    const image = document.getElementById('plan-picture');
+    const rect = image.getBoundingClientRect();
+    return Math.abs(rect.width / rect.height - image.naturalWidth / image.naturalHeight) < 0.01;
+  })()`), 'Plan must retain its aspect ratio');
   await screenshot('smoke-mobile-plan.png');
   if (await evaluate(`Boolean(document.getElementById('scene-picker'))`)) {
     assert.equal(await evaluate(`getComputedStyle(document.getElementById('plan')).backgroundColor`), await evaluate(`getComputedStyle(document.getElementById('scene-menu')).backgroundColor`));
@@ -196,6 +201,13 @@ try {
       await command('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: true });
       assert.ok(await evaluate(`document.getElementById('scene-picker').getBoundingClientRect().right <= innerWidth`));
     }
+  }
+  // Confirm that the corrected hangar and service-room points work in detail view.
+  for (const id of [17, 18]) {
+    await evaluate(`document.getElementById('show-plan').click()`);
+    await waitFor(`document.getElementById('plan-picture').complete && document.getElementById('plan-picture').naturalWidth === window.TOUR_DATA.planCrop[2] - window.TOUR_DATA.planCrop[0]`);
+    await evaluate(`[...document.querySelectorAll('.plan-marker')].find(b => b.textContent === '${id}').click()`);
+    await waitFor(`!document.getElementById('plan').open && document.getElementById('scene').value === '${id}' && document.getElementById('status').textContent === ''`);
   }
   assert.deepEqual(errors, [], errors.join('\n'));
   console.log('PASS: all 37 panoramas, links, staircases, plans and mobile layout; no browser errors.');

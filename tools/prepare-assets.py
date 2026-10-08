@@ -1,59 +1,65 @@
 #!/usr/bin/env python3
-"""Prepare the October 7 renders and relabel the available legacy plans."""
+"""Prepare browser panoramas and numbered floor plans from the supplied archives."""
 from pathlib import Path
+from io import BytesIO
+from zipfile import ZipFile
 import argparse
-import re
-from PIL import Image, ImageDraw, ImageFont
+import json
+import subprocess
+from PIL import Image
 
 ROOT = Path(__file__).resolve().parent.parent
 parser = argparse.ArgumentParser(description=__doc__)
-parser.add_argument('--source', type=Path, default=ROOT / 'archive/final-0710/0710 рендер')
-parser.add_argument('--plans', type=Path, default=ROOT / 'archive/legacy/1-39')
+parser.add_argument('--source', type=Path, default=ROOT / '0710 рендер.zip',
+                    help='Panorama ZIP or directory containing 1.jpg through 37.jpg')
+parser.add_argument('--plans', type=Path,
+                    default=ROOT / 'Attachments_YanochkaBurakova19@yandex.ru_2026-10-08_07-28-42.zip',
+                    help='Numbered floor-plan ZIP or directory')
+parser.add_argument('--skip-panoramas', action='store_true',
+                    help='Update only the floor plans')
 args = parser.parse_args()
 ASSETS = ROOT / 'assets'
 ASSETS.mkdir(exist_ok=True)
 
-for point in range(1, 38):
-    with Image.open(args.source / f'{point}.jpg') as image:
-        if image.size != (8192, 4096):
-            raise ValueError(f'Unexpected panorama dimensions: {point}: {image.size}')
-        image.resize((4096, 2048), Image.Resampling.LANCZOS).save(
-            ASSETS / f'{point}.jpg', quality=90, optimize=True)
 
-# Legacy label centers and their new numbers; no final plans were in the ZIP.
-labels = {
-    1: [(389,930,1), (531,926,2), (682,926,5), (624,643,7),
-        (624,453,9), (421,1074,3), (543,1077,4), (683,1076,6),
-        (647,270,11), (786,624,8), (815,318,10), (965,1065,14),
-        (851,1094,15), (950,966,13)],
-    2: [(428,640,19), (536,485,20), (509,260,21), (511,890,28),
-        (581,737,30), (418,733,31), (686,1034,26), (441,1031,27),
-        (890,1033,24), (935,740,22), (931,921,23), (709,910,25),
-        (702,622,29), (702,512,33), (769,387,35), (947,586,34),
-        (727,230,36), (950,389,37), (803,670,32)]
-}
-font = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', 30)
-for floor in (1, 2):
-    source = next(args.plans.glob(f'*{floor} го*'))
-    with Image.open(source) as original:
+def load_image(source, filename):
+    if source.is_dir():
+        return Image.open(source / filename)
+    with ZipFile(source) as archive:
+        for info in archive.infolist():
+            name = info.filename
+            if not info.flag_bits & 0x800:
+                try:
+                    name = name.encode('cp437').decode('utf-8')
+                except (UnicodeError, LookupError):
+                    pass
+            if Path(name).name == filename:
+                return Image.open(BytesIO(archive.read(info)))
+    raise FileNotFoundError(f'{filename} not found in {source}')
+
+
+if not args.skip_panoramas:
+    for point in range(1, 38):
+        with load_image(args.source, f'{point}.jpg') as image:
+            if image.size != (8192, 4096):
+                raise ValueError(f'Unexpected panorama dimensions: {point}: {image.size}')
+            image.resize((4096, 2048), Image.Resampling.LANCZOS).save(
+                ASSETS / f'{point}.jpg', quality=90, optimize=True)
+    print('Prepared 37 browser panoramas.')
+
+# Read the same dimensions and crop used by the interactive plan viewer.
+data = json.loads(subprocess.check_output([
+    'node', '-e',
+    "global.window = {}; require('./tour.js'); console.log(JSON.stringify(window.TOUR_DATA));"
+], cwd=ROOT, text=True))
+for floor in data['floors']:
+    number = floor['id']
+    with load_image(args.plans, f'Манжерок план {number} го этажа.jpg') as original:
+        if original.size != (floor['width'], floor['height']):
+            raise ValueError(f'Unexpected plan dimensions: {number}: {original.size}')
+        # Preserve the architect's original labels and drawing without repainting.
         image = original.convert('RGB')
-        draw = ImageDraw.Draw(image)
-        for x, y, point in labels[floor]:
-            # Cover the previous red number plates before relabeling.
-            if floor == 1 and point == 11:
-                box = (629, 235, 665, 309)
-            elif floor == 1 and point == 13:
-                box = (916, 942, 985, 986)
-            else:
-                box = (x - 32, y - 21, x + 32, y + 21)
-            draw.rectangle(box, fill='white')
-        points = re.findall(r"\[(\d+), '[^']+', (\d+), (\d+), \[\[", (ROOT / 'tour.js').read_text())
-        for point, x, y in points:
-            point, x, y = int(point), int(x), int(y)
-            if (1 if point <= 18 else 2) != floor:
-                continue
-            draw.rectangle((x-29, y-19, x+29, y+19), fill=(255,0,0))
-            draw.text((x,y), str(point), font=font, fill='white', anchor='mm')
-        image.save(ASSETS / f'plan-{floor}.png')
-        image.crop((300,180,1050,1200)).save(ASSETS / f'plan-{floor}-detail.png')
-print('Prepared 37 browser panoramas and four relabeled legacy plan images.')
+        image.save(ASSETS / f'plan-{number}.png', optimize=True)
+        image.crop(tuple(data['planCrop'])).save(
+            ASSETS / f'plan-{number}-detail.png', optimize=True)
+print('Prepared four floor-plan images with the original numbered labels.')
