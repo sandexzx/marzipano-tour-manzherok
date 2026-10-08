@@ -1,0 +1,4 @@
+# Published WebP tiles are tracked; keep only local checks and temporary builds out.
+/tiles/.point-*/
+/smoke-*.png
+**/__pycache__/

@@ -1,0 +1,24 @@
+{
+  "source_manifest_sha256": "c0247ac551570127cdd64869a188dbfde783b17af2b6ed2263ae3a00784df931",
+  "source_panorama_sha256": "57cb1bfb758e64f8c5446117f590ed5b967a76e228e0fa0d2e054a2e161de2e2",
+  "source_size": [
+    8192,
+    4096
+  ],
+  "levels": [
+    512,
+    1024,
+    2048,
+    4096
+  ],
+  "face_order": "frblud",
+  "tile_size": 512,
+  "format": "webp",
+  "quality": 95,
+  "method": 6,
+  "lossless": false,
+  "source_format": "jpeg",
+  "tile_count": 510,
+  "source_tile_bytes": 30941367,
+  "output_tile_bytes": 14976540
+}
